@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StudyAtlas｜全球留学人格测试</title>
+<style>
+:root{--p:#4f7cff;--bg:#eef5ff}
+*{box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}
+body{margin:0;background:linear-gradient(135deg,#6ea8ff,#8be9ff);color:#1f2937}
+.wrap{max-width:860px;margin:28px auto;padding:22px}
+.card{background:#fff;border-radius:24px;padding:28px;box-shadow:0 18px 40px rgba(0,0,0,.15)}
+h1{text-align:center;margin:0 0 8px}
+.sub{text-align:center;color:#64748b;margin-bottom:22px}
+.progress{height:10px;background:#e5e7eb;border-radius:99px;overflow:hidden}
+.bar{height:100%;width:0;background:linear-gradient(90deg,#4f7cff,#7c4dff);transition:.3s}
+.q{display:none;animation:f .25s}.q.active{display:block}
+@keyframes f{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.opt{display:block;margin:12px 0;padding:16px;border:2px solid #d6dbe6;border-radius:14px;cursor:pointer}
+.opt:hover{border-color:var(--p);background:#f5f9ff}
+input{display:none} input:checked+label{background:var(--p);color:#fff;border-color:var(--p)}
+.btns{display:flex;justify-content:space-between;margin-top:18px}
+button{border:none;border-radius:12px;padding:12px 22px;background:var(--p);color:#fff;cursor:pointer}
+button:disabled{background:#cbd5e1}
+#result{display:none}
+.rank{padding:14px;background:#f8fafc;border-radius:14px;margin:12px 0}
+.meter{height:8px;background:#e5e7eb;border-radius:99px;overflow:hidden}.meter div{height:100%;background:var(--p)}
+.badge{display:inline-block;background:#eef2ff;color:#4f46e5;padding:6px 12px;border-radius:99px;margin-bottom:10px}
+.small{color:#64748b}
+</style>
+</head>
+<body>
+<div class="wrap"><div class="card">
+<h1>🌍 StudyAtlas 全球留学人格测试</h1>
+<p class="sub">20道题 · 覆盖人格、学术倾向、文化适应、地理偏好与未来规划</p>
+<div class="progress"><div class="bar" id="bar"></div></div>
+<div id="quiz"></div>
+<div class="btns"><button id="prev">上一题</button><button id="next">下一题</button></div>
+<div id="result"></div>
+</div></div>
+<script>
+const countries={
+"日本":{O:2,S:1,A:3,U:2,N:2,C:3,R:2},
+"韩国":{O:2,S:3,A:2,U:3,N:1,C:3,R:2},
+"新加坡":{O:2,S:2,A:3,U:3,N:1,C:3,R:2},
+"美国":{O:3,S:3,A:3,U:3,N:1,C:1,R:3},
+"英国":{O:2,S:2,A:3,U:2,N:1,C:2,R:2},
+"加拿大":{O:2,S:2,A:2,U:2,N:3,C:2,R:2},
+"澳大利亚":{O:2,S:3,A:2,U:2,N:3,C:2,R:2},
+"德国":{O:1,S:1,A:3,U:1,N:2,C:3,R:1},
+"荷兰":{O:3,S:3,A:2,U:2,N:2,C:2,R:2},
+"法国":{O:2,S:2,A:2,U:2,N:1,C:2,R:2},
+"瑞士":{O:1,S:1,A:3,U:1,N:3,C:3,R:1},
+"芬兰":{O:2,S:1,A:3,U:1,N:3,C:2,R:1}
+};
+const desc={
+"日本":"秩序、安全感与文化体验兼备，适合愿意长期成长的人。",
+"美国":"开放、多元、创新，适合喜欢表达与挑战的人。",
+"德国":"研究与工程优势突出，适合务实、专注的人。",
+"荷兰":"国际化与开放氛围突出，适合喜欢合作学习的人。",
+"加拿大":"生活平衡、包容友好，适合追求幸福感的人。",
+"英国":"学术传统浓厚，适合独立思考者。",
+"澳大利亚":"阳光户外、实践机会丰富。",
+"韩国":"快节奏与流行文化并存。",
+"新加坡":"亚洲国际都市，高效率、多语言环境。",
+"法国":"艺术、人文与设计氛围浓厚。",
+"瑞士":"高质量生活与精密学术环境。",
+"芬兰":"自主学习、自然环境与创新教育。"
+};
+const qs=[
+["第一次到陌生城市，你会？",[["跟计划走",{R:2}],["随便探索",{O:2}],["找当地人聊天",{S:2}],["慢慢观察",{N:2}]]],
+["课堂更喜欢？",[["讨论式",{S:2,U:2}],["小班研讨",{A:2}],["实验室",{A:2,R:1}],["老师讲授",{R:2}]]],
+["论文截止前一天？",[["提前完成",{R:2}],["灵感爆发",{O:2}],["熬夜冲刺",{O:1}],["找同伴讨论",{S:2}]]],
+["理想城市？",[["超大都市",{U:2}],["古城",{C:2}],["小镇",{N:2}],["海边",{N:2}]]],
+["面对文化差异？",[["兴奋体验",{O:2}],["尊重观察",{C:2}],["谨慎适应",{R:1}],["希望保持原样",{N:1}]]],
+["最喜欢课程？",[["AI创业",{U:2}],["工程",{A:2}],["商科",{S:1}],["艺术",{C:2}]]],
+["更享受？",[["发明新东西",{U:2}],["理论研究",{A:2}],["解决现实问题",{R:1}],["团队合作",{S:2}]]],
+["希望导师？",[["给自由",{O:2}],["严格指导",{R:2}],["经常沟通",{S:2}],["行业经验丰富",{U:2}]]],
+["理想天气？",[["四季分明",{N:1}],["阳光",{N:2}],["雪景",{N:2}],["海洋气候",{N:1}]]],
+["周末最想？",[["探店旅行",{O:2}],["宅家",{R:1}],["聚会",{S:2}],["看展",{C:2}]]],
+["最舒服社交？",[["大型聚会",{S:2}],["咖啡聊天",{S:1}],["社团活动",{S:2}],["独处",{R:1}]]],
+["喜欢自行车通勤？",[["非常喜欢",{N:2}],["可以",{N:1}],["一般",{}],["不喜欢",{U:1}]]],
+["希望工作语言？",[["英语",{U:2}],["日语",{C:2}],["德语",{A:2}],["法语",{C:2}]]],
+["成功更像？",[["自由",{O:2}],["稳定",{R:2}],["创新",{U:2}],["影响他人",{S:2}]]],
+["喜欢夜生活？",[["非常",{S:2}],["偶尔",{S:1}],["一般",{}],["不喜欢",{R:1}]]],
+["遇到不会的问题？",[["自己查",{A:2}],["问老师",{R:1}],["问同学",{S:2}],["看视频",{O:1}]]],
+["更重视？",[["名校",{A:2}],["就业",{U:2}],["生活质量",{N:2}],["国际经历",{O:2}]]],
+["办事效率慢会？",[["接受文化差异",{C:2}],["有点急",{U:1}],["很焦虑",{R:1}],["无所谓",{O:1}]]],
+["如果重来一次？",[["探索世界",{O:2}],["深造科研",{A:2}],["创业",{U:2}],["陪伴家人",{N:1}]]],
+["机场最后一题：你最想拿起哪张登机牌？",[["东京",{C:2,R:1}],["柏林",{A:2}],["阿姆斯特丹",{O:2,S:1}],["波士顿",{U:2}],["赫尔辛基",{N:2,A:1}],["悉尼",{N:2,S:1}]]]
+];
+const quiz=document.getElementById("quiz"),bar=document.getElementById("bar");let cur=0;const ans=[];
+qs.forEach((q,i)=>{let h=`<div class="q ${i==0?'active':''}"><h2>${i+1}. ${q[0]}</h2>`;q[1].forEach((o,j)=>h+=`<input type="radio" name="q${i}" id="q${i}_${j}" value="${j}"><label class="opt" for="q${i}_${j}">${o[0]}</label>`);h+="</div>";quiz.insertAdjacentHTML("beforeend",h)});
+const cards=[...document.querySelectorAll(".q")];
+function upd(){cards.forEach((c,i)=>c.classList.toggle("active",i===cur));bar.style.width=(cur/qs.length*100)+"%";prev.disabled=cur===0;next.textContent=cur===qs.length-1?"查看结果":"下一题"}
+prev.onclick=()=>{cur--;upd()}
+next.onclick=()=>{const c=document.querySelector(`input[name=q${cur}]:checked`);if(!c){alert("请选择一个答案");return;}ans[cur]=+c.value;if(cur===qs.length-1)calc();else{cur++;upd();}};
+function calc(){
+ let trait={O:0,S:0,A:0,U:0,N:0,C:0,R:0};
+ ans.forEach((a,i)=>Object.entries(qs[i][1][a][1]).forEach(([k,v])=>trait[k]+=v));
+ let score={};
+ for(const [name,p] of Object.entries(countries)){let s=0;for(const k in trait)s+=trait[k]*p[k];score[name]=s}
+ let arr=Object.entries(score).sort((a,b)=>b[1]-a[1]);let max=arr[0][1];
+ quiz.style.display="none";document.querySelector(".btns").style.display="none";document.querySelector(".progress").style.display="none";
+ let t=Object.entries(trait).sort((a,b)=>b[1]-a[1]).slice(0,2).map(x=>({O:"探索者",S:"连接者",A:"研究者",U:"创新者",N:"自然派",C:"文化派",R:"规划者"}[x[0]])).join(" × ");
+ let html=`<span class="badge">你的留学人格：${t}</span><h2>🥇 最适合你的国家：${arr[0][0]}</h2><p>${desc[arr[0][0]]}</p><h3>人格维度</h3>`;
+ const names={O:"开放探索",S:"社交互动",A:"学术研究",U:"创新实践",N:"自然偏好",C:"文化适应",R:"稳定规划"};
+ for(const k in trait){let p=Math.min(100,trait[k]*8);html+=`<div class="rank"><strong>${names[k]}</strong><div class="meter"><div style="width:${p}%"></div></div></div>`}
+ html+="<h3>你的TOP5留学目的地</h3>";
+ arr.slice(0,5).forEach((x,i)=>{let p=Math.round(x[1]/max*100),e=["🥇","🥈","🥉","④","⑤"][i];html+=`<div class="rank"><strong>${e} ${x[0]}</strong><div class="meter"><div style="width:${p}%"></div></div><div class="small">${desc[x[0]]}</div></div>`});
+ html+=`<h3>适合你的学习环境</h3><ul><li>课堂风格：${trait.A>trait.U?"研究导向":"实践导向"}</li><li>生活方式：${trait.N>trait.U?"自然与平衡":"都市与机会"}</li><li>文化适应：${trait.C>trait.R?"乐于体验不同文化":"喜欢稳定规则"}</li></ul><button onclick="location.reload()">重新测试</button>`;
+ result.innerHTML=html;result.style.display="block";
+}
+upd();
+</script>
+</body></html>
